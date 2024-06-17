@@ -1,0 +1,82 @@
+import numpy as np
+
+# Função para calcular os pesos usando AHP
+def ahp(pairwise_matrix):
+    eigvals, eigvecs = np.linalg.eig(pairwise_matrix)
+    max_eigval = np.max(eigvals)
+    eigvec = eigvecs[:, np.argmax(eigvals)]
+    weights = eigvec / eigvec.sum()
+    return weights.real
+
+# Função para calcular a Razão de Consistência (CR)
+def consistency_ratio(pairwise_matrix):
+    n = pairwise_matrix.shape[0]
+    RI = [0, 0, 0.58, 0.9, 1.12, 1.24, 1.32, 1.41, 1.45]
+    lamda_max = np.max(np.linalg.eigvals(pairwise_matrix)).real
+    CI = (lamda_max - n) / (n - 1)
+    CR = CI / RI[n - 1]
+    return CR
+
+# Matriz de comparação dos critérios
+criteria_matrix = np.array([
+    [1, 1/2],
+    [2, 1]
+])
+
+# Matrizes de comparação das opções para cada critério
+# Exemplo para 2 opções: Oracle, SAP
+
+# Critério Valor OPEX
+opex_matrix = np.array([
+    [1, 596.43/596.43],
+    [596.43/596.43, 1]
+])
+
+# Critério Valor CAPEX
+capex_matrix = np.array([
+    [1, 9.6/9.3],
+    [9.3/9.6, 1]
+])
+
+# Calculando os pesos dos critérios
+criteria_weights = ahp(criteria_matrix)
+criteria_cr = consistency_ratio(criteria_matrix)
+
+# Calculando os pesos das opções para cada critério
+opex_weights = ahp(opex_matrix)
+opex_cr = consistency_ratio(opex_matrix)
+
+capex_weights = ahp(capex_matrix)
+capex_cr = consistency_ratio(capex_matrix)
+
+# Calculando a pontuação final das opções
+final_scores = (opex_weights * criteria_weights[0] +
+                capex_weights * criteria_weights[1])
+
+# Identificando o melhor software
+best_software_index = np.argmax(final_scores)
+software_names = ['Oracle', 'SAP']
+best_software = software_names[best_software_index]
+
+print("Pesos dos Critérios:", criteria_weights)
+print("Razão de Consistência dos Critérios (CR):", criteria_cr)
+
+print("Pesos das Opções no Critério Valor OPEX:", opex_weights)
+print("Razão de Consistência do Critério Valor OPEX (CR):", opex_cr)
+
+print("Pesos das Opções no Critério Valor CAPEX:", capex_weights)
+print("Razão de Consistência do Critério Valor CAPEX (CR):", capex_cr)
+
+print("Pontuações Finais das Opções:", final_scores)
+print("O melhor software é:", best_software)
+
+# Comparando os valores de CAPEX e OPEX
+if capex_weights[0] < capex_weights[1]:
+    print("O melhor software é o Oracle, com um valor de CAPEX de", capex_weights[0])
+else:
+    print("O melhor software é o SAP, com um valor de CAPEX de", capex_weights[1])
+
+if opex_weights[0] < opex_weights[1]:
+    print("O melhor software é o Oracle, com um valor de OPEX de", opex_weights[0])
+else:
+    print("O melhor software é o SAP, com um valor de OPEX de", opex_weights[1]) 
